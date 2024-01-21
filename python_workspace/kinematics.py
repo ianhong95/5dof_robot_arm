@@ -203,9 +203,9 @@ def calc_theta_2(wrist_pos_vector, theta_3):
 
 def calc_joint_angles(tf_matrix):
     wrist_pos = calc_wrist_position(tf_matrix)
-    theta_1 = calc_theta_1(wrist_pos)
-    theta_3 = calc_theta_3(wrist_pos)
-    theta_2 = calc_theta_2(wrist_pos, theta_3)
+    theta_1 = round(calc_theta_1(wrist_pos), 2)
+    theta_3 = round(calc_theta_3(wrist_pos), 2)
+    theta_2 = round(calc_theta_2(wrist_pos, theta_3), 2)
 
     position_angles = [theta_1, theta_2, theta_3]
 
@@ -221,8 +221,8 @@ def calc_orientation_angles(tf_matrix):
 
     rot_mat_product = rot_mat_14_inv @ (rot_mat_16)
 
-    theta_4 = acos(rot_mat_product[0, 2])
-    theta_5 = acos(rot_mat_product[2, 1])
+    theta_4 = round(acos(rot_mat_product[0, 2]), 2)
+    theta_5 = round(acos(rot_mat_product[2, 1]), 2)
 
     orientation_angles = [theta_4, theta_5]
 

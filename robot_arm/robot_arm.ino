@@ -1,6 +1,10 @@
 // #include <PCA9685.h>
 // PCA9685 pwmController;
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 #include <LiquidCrystal_I2C.h>
@@ -85,9 +89,23 @@ float joint_angles[5] = {135.0, 135.0, 90.0, 90.0, 90.0};
 int joint_pwm[5] = {390, 390, 390, 390, 390}; // TBD
 
 
+// --- DEFINE ZERO POSITION ---
+float zero_angles[5] = {135.0, 135.0, 90.0, 90.0, 90.0};
+
+
 // --- CHECK VARIABLES ---
 bool target_reached;
 bool joint_target_reached[5] = {false, false, false, false, false};
+
+
+// --- SERIAL ---
+char START_MARKER = '<';
+char END_MARKER = '>';
+char DELIMITER[] = ",";
+int incoming_byte;
+
+char incoming_buffer[40];
+char *incoming_joint_angles[5];
 
 
 // --- SETUP ---
@@ -95,7 +113,7 @@ bool joint_target_reached[5] = {false, false, false, false, false};
 void setup() {
 
   // Start listeners
-  Serial.begin(9600);
+  Serial.begin(115200);
   servo.begin();
   lcd.init();
 
@@ -124,58 +142,63 @@ void setup() {
   pot_reading_0 = analogRead(ana_pin_0);
   pwm_0 = pot_to_pwm(pot_reading_0, TEST_SERVO_MIN, TEST_SERVO_MAX);
 
+  parse_serial();
+  delay(500);
+
+
   // Set servos to initial position
   // Arguments of setPWM are (servo number, turn on, turn off)
   // Turn on: At what point in the 4096-part cycle to turn the PWM output ON
   // Turn off: At what point in the 4096-part cycle to turn the PWM output OFF
   force_vertical();
-  delay(1000);
+  delay(5000);
 
   // step_all_to_position(60);
   // delay(1000);
 
   float test_targets[5] = {135, 135, 90, 90, 90};
-  float test_targets_2[5] = {120, 120, 60, 60, 60};
+  float test_targets_2[5] = {135, 155, 105, 105, 105};
 
-  set_joint_angles(test_targets_2);
-  delay(1000);
+  // set_joint_angles(test_targets_2);
+  // delay(1000);
 
-  set_joint_angles(test_targets);
-  delay(1000);
+  // set_joint_angles(test_targets);
+  // delay(1000);
 
-  set_joint_angles(test_targets_2);
-  delay(1000);
+  // set_joint_angles(test_targets_2);
+  // delay(3000);
 
-  step_to_vertical();
-  delay(1000);
-
+  // step_to_vertical();
+  // delay(1000);
 }
 
 
 // --- MAIN LOOP ---
 
 void loop() {
-  check_main_btn(dig_pin_2);
+  parse_serial();
 
-  raw_pot_reading = analogRead(ana_pin_0);
-  pwm = pot_to_pwm(ana_pin_0, TEST_SERVO_MIN, TEST_SERVO_MAX);
+  // check_main_btn(dig_pin_2);
+
+  // raw_pot_reading = analogRead(ana_pin_0);
+  // pwm = pot_to_pwm(ana_pin_0, TEST_SERVO_MIN, TEST_SERVO_MAX);
 
   // --- FOR CALIBRATION ---
   // Serial.println(pwm);
   // servo.setPWM(5, 0, pwm);
   // -------------------
 
-  new_time = millis();
+  // new_time = millis();
 
   // Only print to LCD ever 100ms and if raw pot reading changes significantly
-  if ((new_time - time_0 > 100) && (abs(raw_pot_reading - pot_reading_0) > 5))  {
-    lcd_clear_section(0, 5, 8);
-    lcd.setCursor(5, 0);
-    lcd.print(pwm);
-    time_0 = new_time;
-  }
+  // if ((new_time - time_0 > 100) && (abs(raw_pot_reading - pot_reading_0) > 5))  {
+  //   lcd_clear_section(0, 5, 8);
+  //   lcd.setCursor(5, 0);
+  //   lcd.print(pwm);
+  //   time_0 = new_time;
+  // }
 
-  int pwm_reading;
+  // int pwm_reading;
 
   // if (abs(raw_pot_reading-pot_reading_0) > 5) {
   //   pwm_reading = servo.getPWM(0, false);
@@ -339,7 +362,7 @@ void set_joint_angles(float joint_angle_targets[5]) {
       }
       
       joint_pwm_targets[j] = map(joint_angle_targets[j], 0, joint_max_angles[j], joint_min_pwm[j], joint_max_pwm[j]);
-      Serial.println(joint_pwm_targets[j]);
+      // Serial.println(joint_pwm_targets[j]);
 
       joint_pwm_diffs[j] = joint_pwm_targets[j] - joint_pwm[j];
 
@@ -354,5 +377,30 @@ void set_joint_angles(float joint_angle_targets[5]) {
       }
     }
     delay(step_delay);
+  }
+}
+
+
+void parse_serial() {
+  if (Serial.available() > 30)  {
+    incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 40);
+
+    char *token = strtok(incoming_buffer, DELIMITER);
+    int tok_counter = 0;
+    
+    while(token != NULL)  {
+      float fl_tok = atof(token);
+      joint_angles[tok_counter] = fl_tok;
+      token = strtok(NULL, DELIMITER);
+      tok_counter++;
+    }
+
+    joint_angles[0] = 135.0 - joint_angles[0];
+    joint_angles[1] = 135.0 - joint_angles[1];
+    joint_angles[2] = 90.0 - joint_angles[2];
+    joint_angles[3] = 90.0 - joint_angles[3];
+    joint_angles[4] = 90.0;
+
+    set_joint_angles(joint_angles);
   }
 }

@@ -18,8 +18,13 @@ NUM_JOINTS = pybullet.getNumJoints(ROBOT_ID)
 end_effector_id = 5
 
 TEST_TF_MATRIX = np.array([[1, 0, 0, 0.1],
+                  [0, 1, 0, 0],
+                  [0, 0, -1, 0.18],
+                  [0, 0, 0, 1]])
+
+POS_2 = np.array([[1, 0, 0, 0.1],
                   [0, 1, 0, 0.1],
-                  [0, 0, -1, 0.1],
+                  [0, 0, -1, 0.05],
                   [0, 0, 0, 1]])
 
 
@@ -52,11 +57,11 @@ def main():
         fk_z = fk[:3,3][2]
         # x_axis = pybullet.addUserDebugLine([fk_x, fk_y, fk_z], [fk_x + 0.1, fk_y, fk_z], [255,0,0])
         # y_axis = pybullet.addUserDebugLine([fk_x, fk_y, fk_z], [fk_x, fk_y + 0.1, fk_z], [0, 255,0])
-        z_axis = pybullet.addUserDebugLine([fk_x, fk_y, fk_z], [fk_x, fk_y, fk_z - 0.1], [0,0, 255])
+        # z_axis = pybullet.addUserDebugLine([fk_x, fk_y, fk_z], [fk_x, fk_y, fk_z - 0.1], [0,0, 255])
         print(test_joint_angles)
         # pybullet.removeUserDebugItem(x_axis)
         # pybullet.removeUserDebugItem(y_axis)
-        pybullet.removeUserDebugItem(z_axis)
+        # pybullet.removeUserDebugItem(z_axis)
         pybullet.stepSimulation()
         time.sleep(1./500.)
 
