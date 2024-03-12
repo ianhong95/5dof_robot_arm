@@ -30,7 +30,7 @@ def compute_DH_params(joint_angles):
 
     DH_parameters = {
         "joint_1": {
-            "d": 99.1/1000.0,
+            "d": 121/1000.0,
             "theta": theta_values[0],
             "a": 0,
             "alpha": pi/2
@@ -38,13 +38,13 @@ def compute_DH_params(joint_angles):
         "joint_2": {
             "d": 0,
             "theta": theta_values[1] + pi/2,
-            "a": 126/1000.0,
+            "a": 172.55/1000.0,
             "alpha": 0
         },
         "joint_3": {
             "d": 0,
             "theta": theta_values[2],
-            "a": 101/1000.0,
+            "a": 172.55/1000.0,
             "alpha": 0
         },
         "joint_4": {
@@ -54,7 +54,7 @@ def compute_DH_params(joint_angles):
             "alpha": pi/2
         },
         "joint_5":  {
-            "d": 61/1000.0,
+            "d": 85/1000.0,
             "theta": theta_values[4],
             "a": 0,
             "alpha": 0
@@ -135,9 +135,9 @@ def calc_wrist_position(tf_mat):
     wy = pos_vec[1] - (0.0601 * rot_mat[:3, 2][1].transpose())
     wz = pos_vec[2] - (0.0601 * rot_mat[:3, 2][2].transpose())
 
-    print(f'wx: {wx}')
-    print(f'wy: {wy}')
-    print(f'wz: {wz}')
+    # print(f'wx: {wx}')
+    # print(f'wy: {wy}')
+    # print(f'wz: {wz}')
 
     wrist_pos_vec = np.array([wx, wy, wz])
     
