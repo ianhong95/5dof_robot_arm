@@ -96,9 +96,9 @@ void setup() {
   // Arguments of setPWM are (servo number, turn on, turn off)
   // Turn on: At what point in the 4096-part cycle to turn the PWM output ON
   // Turn off: At what point in the 4096-part cycle to turn the PWM output OFF
-  // force_vertical();
+  force_vertical();
   // servo_calibration();
-  // delay(500);
+  delay(500);
   timer = millis();
 }
 
@@ -196,61 +196,51 @@ int angle_to_pwm(int angle_input, int min_angle, int max_angle, int min_pwm, int
 //  --- TEST FUNCTIONS ---
 
 void set_joint_angles(float joint_angle_targets[5]) {
-  start_time = millis();
-  Serial.print("start: ");
-  Serial.println(start_time);
-
-  for (int i=0; i<num_servos; i++)  {
-    joint_target_reached[i] = false;
-  }
+  // start_time = millis();
+  // Serial.print("start: ");
+  // Serial.println(start_time);
 
   float joint_pwm_targets[5];
   float joint_pwm_diffs[5];
 
-  int target_counter=0;
+  for (int i=0; i<num_servos; i++)  {
+    joint_target_reached[i] = false;
+    joint_pwm_targets[i] = map(joint_angle_targets[i], 0, joint_max_angles[i], joint_min_pwm[i], joint_max_pwm[i]);
+  }
 
-  timer = millis();
-  Serial.print("while start: ");
-  Serial.println(timer);
-  while (target_counter < num_servos)  {
+  // timer = millis();
+  // Serial.print("while start: ");
+  // Serial.println(timer);
+
+  while (joint_target_reached[0]==false || joint_target_reached[1]==false || joint_target_reached[2]==false || joint_target_reached[3]==false)  {
     for (int j=0; j<num_servos; j++)  {
 
-      target_counter=0;
+        joint_pwm_diffs[j] = joint_pwm_targets[j] - joint_pwm[j];
 
-      // Check each joint to see if the target has been reached
-      for (int k=0; k<num_servos; k++)  {
-        if (joint_target_reached[k]==true) {
-          target_counter++;
+        // timer = millis();
+        // Serial.print("if start: ");
+        // Serial.println(timer);
+        if ((joint_pwm_diffs[j] > target_pwm_tolerance) && (joint_target_reached[j]!=true)) {
+          servo.setPWM(j, 0, joint_pwm[j]);
+          joint_pwm[j] += pwm_step;
+        } else if (joint_pwm_diffs[j] < -(target_pwm_tolerance) && (joint_target_reached[j]!=true))  {
+          servo.setPWM(j, 0, joint_pwm[j]);
+          joint_pwm[j] -= pwm_step;
+        } else  {
+          joint_target_reached[j] = true;
         }
+
+        // timer = millis();
+        // Serial.print("if end: ");
+        // Serial.println(timer);
       }
+      delay(step_delay);
       
-      joint_pwm_targets[j] = map(joint_angle_targets[j], 0, joint_max_angles[j], joint_min_pwm[j], joint_max_pwm[j]);
-      // Serial.println(joint_pwm_targets[j]);
-
-      joint_pwm_diffs[j] = joint_pwm_targets[j] - joint_pwm[j];
-
-      timer = millis();
-      Serial.print("if start: ");
-      Serial.println(timer);
-      if (joint_pwm_diffs[j] > target_pwm_tolerance) {
-        servo.setPWM(j, 0, joint_pwm[j]);
-        joint_pwm[j] += pwm_step;
-      } else if (joint_pwm_diffs[j] < -(target_pwm_tolerance))  {
-        servo.setPWM(j, 0, joint_pwm[j]);
-        joint_pwm[j] -= pwm_step;
-      } else  {
-        joint_target_reached[j] = true;
-      }
-
-      timer = millis();
-      Serial.print("if end: ");
-      Serial.println(timer);
+      // end_time = millis();
+      // Serial.print("end: ");
+      // Serial.println(end_time);
     }
-    delay(step_delay);
-  }
-  end_time = millis();
-  Serial.print("end: ");
-  Serial.println(end_time);
+  
 }
 
 
