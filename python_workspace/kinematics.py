@@ -227,3 +227,53 @@ def calc_orientation_angles(tf_matrix):
     orientation_angles = [theta_4, theta_5]
 
     return orientation_angles
+
+
+# --- TRANSLATIONS AND ROTATIONS ---
+
+def tf_from_position(position_mtx, current_frame):
+    translation_mtx = np.array([[1, 0, 0, position_mtx[0]],
+                                [0, 1, 0, position_mtx[1]],
+                                [0, 0, 1, position_mtx[2]],
+                                [0, 0, 0, 1]])
+
+    new_frame = translation_mtx @ current_frame
+
+    return new_frame
+
+
+# roll = rotation about x
+# pitch = rotation about y
+# yaw = rotation about z
+
+def tf_from_roll(roll_angle, current_frame):
+    rotation_mtx = np.array([[1, 0, 0, 0],
+                             [0, cos(roll_angle), -sin(roll_angle), 0],
+                             [0, sin(roll_angle), cos(roll_angle), 0],
+                             [0, 0, 0, 1]])
+
+    new_frame = rotation_mtx @ current_frame
+
+    return new_frame
+
+
+def tf_from_pitch(pitch_angle, current_frame):
+    rotation_mtx = np.array([[cos(pitch_angle), 0, sin(pitch_angle), 0],
+                             [0, 1, 0, 0],
+                             [-sin(pitch_angle), 0, cos(pitch_angle), 0],
+                             [0, 0, 0, 1]])
+    
+    new_frame = rotation_mtx @ current_frame
+
+    return new_frame
+
+
+def tf_from_yaw(yaw_angle, current_frame):
+    rotation_mtx = np.array([[cos(yaw_angle), -sin(yaw_angle), 0, 0],
+                             [sin(yaw_angle), cos(yaw_angle), 0, 0],
+                             [0, 0, 1, 0],
+                             [0, 0, 0, 1]])
+    
+    new_frame = rotation_mtx @ current_frame
+
+    return new_frame

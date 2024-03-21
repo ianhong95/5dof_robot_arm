@@ -1,5 +1,5 @@
 from time import sleep
-from math import degrees, radians
+from math import degrees, radians, pi
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -13,12 +13,14 @@ class Robot_Arm:
         # GENERAL
         self.joint_angles = [0, 0, 0, 0, 0]
         self.num_joints = 5
+        self.num_steps = 10.0
 
-        # SERIAL CONSTANTS
+        # SERIAL
         self.serial_port = serial.Serial("/dev/ttyUSB0", 115200)    # Find a way to scan and find the right serial port
         self.START_CHAR = b'<'
         self.END_CHAR = b'>'
         self.DELIMITER = b','
+        
 
         # INITIALIZE ORIENTATION
         self.rot_x = np.array([1, 0, 0])
@@ -26,7 +28,16 @@ class Robot_Arm:
         self.rot_z = np.array([0, 0, 1])
 
         # INITIALIZE POSITION
-        self.current_pos = np.array([])
+        self.current_pos = np.array([[1, 0, 0, 0],
+                                     [0, 1, 0, 0],
+                                     [0, 0, 1, 0.551],
+                                     [0, 0, 0, 1]])
+        self.current_pose = np.array([0, 0, 0.551])
+        self.home_pos = np.array([[1, 0, 0, 0.12],
+                                  [0, 1, 0, 0],
+                                  [0, 0, -1, 0.12],
+                                  [0, 0, 0, 1]])
+        self.home_rot_pitch = pi
 
         print("Class initialized!")
 
@@ -91,6 +102,17 @@ class Robot_Arm:
         self.serial_port.flush()
 
 
+    # --- GO TO PRE-DEFINED POSITIONS ---
+    def home(self):
+        target_joint_angles = self.compute_ik(self.home_pos)
+        
+        encoded_data = self.encode_data(self.joint_angles)
+        self.serial_write(encoded_data)
+
+        self.current_pos = self.home_pos
+
+        return target_joint_angles
+
     # --- ABSOLUTE MOTION FUNCTIONS ---
         
     def set_joint_angles(self,input_angles):
@@ -137,5 +159,35 @@ class Robot_Arm:
 
     # --- RELATIVE MOTION FUNCTIONS ---
 
+    def translate_xyz(self, x, y, z):
+        pos_vector = np.array([x, y, z])
+        target_rads = []
 
+        new_frame_mat = k.tf_from_position(pos_vector, self.current_pos)
+        target_joint_angles = self.compute_ik(new_frame_mat)
+        print(f'new targets: {target_joint_angles}')
+
+        encoded_data = self.encode_data(target_joint_angles)
+        self.serial_write(encoded_data)
+
+        print(target_joint_angles)
+
+        for i in range(len(target_joint_angles)):
+            target_rads.append(radians(target_joint_angles[i]))
+
+        self.current_pos = new_frame_mat
+        # current_pos = self.current_pos
+        
+        
+        return target_rads
     
+
+    # --- Sync all motors to arrive at target at the same time
+
+    def calc_joint_steps(self, current_joint_angles, target_joint_angles):
+        angle_step_list = []
+        for angle_idx in range(len(current_joint_angles)):
+            angle_step = (target_joint_angles[angle_idx] - current_joint_angles[angle_idx]) / self.num_steps
+            angle_step_list.append(angle_step)
+
+        return angle_step_list

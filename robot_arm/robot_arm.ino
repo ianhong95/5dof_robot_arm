@@ -32,6 +32,9 @@ int pwm;
 const int num_servos = 5;
 unsigned long time_0;
 unsigned long new_time;
+int timer;
+int start_time;
+int end_time;
 
 // --- PWM PARAMETERS ---
 const int target_pwm_tolerance = 1;
@@ -93,9 +96,10 @@ void setup() {
   // Arguments of setPWM are (servo number, turn on, turn off)
   // Turn on: At what point in the 4096-part cycle to turn the PWM output ON
   // Turn off: At what point in the 4096-part cycle to turn the PWM output OFF
-  force_vertical();
+  // force_vertical();
   // servo_calibration();
-  delay(500);
+  // delay(500);
+  timer = millis();
 }
 
 
@@ -103,6 +107,7 @@ void setup() {
 
 void loop() {
   serial_to_joint_angles();
+  // serial_read_test();
 }
 
 
@@ -191,19 +196,28 @@ int angle_to_pwm(int angle_input, int min_angle, int max_angle, int min_pwm, int
 //  --- TEST FUNCTIONS ---
 
 void set_joint_angles(float joint_angle_targets[5]) {
+  start_time = millis();
+  Serial.print("start: ");
+  Serial.println(start_time);
+
   for (int i=0; i<num_servos; i++)  {
     joint_target_reached[i] = false;
   }
 
-  int joint_pwm_targets[5];
-  int joint_pwm_diffs[5];
+  float joint_pwm_targets[5];
+  float joint_pwm_diffs[5];
 
   int target_counter=0;
 
+  timer = millis();
+  Serial.print("while start: ");
+  Serial.println(timer);
   while (target_counter < num_servos)  {
     for (int j=0; j<num_servos; j++)  {
 
       target_counter=0;
+
+      // Check each joint to see if the target has been reached
       for (int k=0; k<num_servos; k++)  {
         if (joint_target_reached[k]==true) {
           target_counter++;
@@ -215,6 +229,9 @@ void set_joint_angles(float joint_angle_targets[5]) {
 
       joint_pwm_diffs[j] = joint_pwm_targets[j] - joint_pwm[j];
 
+      timer = millis();
+      Serial.print("if start: ");
+      Serial.println(timer);
       if (joint_pwm_diffs[j] > target_pwm_tolerance) {
         servo.setPWM(j, 0, joint_pwm[j]);
         joint_pwm[j] += pwm_step;
@@ -224,15 +241,32 @@ void set_joint_angles(float joint_angle_targets[5]) {
       } else  {
         joint_target_reached[j] = true;
       }
+
+      timer = millis();
+      Serial.print("if end: ");
+      Serial.println(timer);
     }
     delay(step_delay);
+  }
+  end_time = millis();
+  Serial.print("end: ");
+  Serial.println(end_time);
+}
+
+
+void serial_read_test() {
+  if (Serial.available() > 5) {
+    Serial.println(Serial.readBytesUntil(END_MARKER, incoming_buffer, 30));
   }
 }
 
 
 void serial_to_joint_angles() {
-  if (Serial.available() > 10)  {
-    incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 40);
+  if (Serial.available() > 0)  {
+    
+    incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 30);
+    Serial.read();  // Clear input buffer
+    Serial.println(incoming_byte);
 
     char *token = strtok(incoming_buffer, DELIMITER);
     int tok_counter = 0;
@@ -246,18 +280,11 @@ void serial_to_joint_angles() {
 
     for (int i=0; i<(num_servos-1); i++)  {
       if(i==1)  {
-        joint_angles[i] = zero_angles[i] - joint_angles[i];
+        joint_angles[i] = zero_angles[i] - joint_angles[i]; // This servo is mounted in reverse
       } else {
         joint_angles[i] = zero_angles[i] + joint_angles[i];
       }
-
-      // For now, ignore joint 4 (z rotation of wrist)
     }
-    // Serial.println(joint_angles[0]);
-    // Serial.println(joint_angles[1]);
-    // Serial.println(joint_angles[2]);
-    // Serial.println(joint_angles[3]);
-    // Serial.println(joint_angles[4]);
 
     set_joint_angles(joint_angles);
   }
