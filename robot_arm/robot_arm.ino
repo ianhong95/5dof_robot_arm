@@ -39,15 +39,15 @@ int end_time;
 // --- PWM PARAMETERS ---
 const int target_pwm_tolerance = 1;
 const int pwm_step = 1;
-const int step_delay = 10;
-int current_angle[5] = {90, 90, 90, 90, 90};
-int current_pwm[5] = {395, 395, 395, 395, 395};
-int pwm_increments[5] = {2, 1.67222, 1.7055, 1.7889, 2};
+const int step_delay = 5;
+float pwm_increments[5] = {2, 1.74817482, 1.7055, 1.7889, 2};  // pwm increase per degree of rotation
+float joint_pwm_targets[5];
+
 
 // --- PHYSICAL JOINT PARAMETERS ---
 const float joint_max_angles[5] = {270.0, 270.0, 270.0, 270.0, 180.0};
-const int joint_min_pwm[5] = {120, 161, 153, 136, 130}; // CALIBRATED 03/10/2024
-const int joint_max_pwm[5] = {660, 613, 613, 619, 650}; // CALIBRATED 03/10/2024
+const float joint_min_pwm[5] = {141.0, 153.0, 146.0, 135.0, 130.0}; // CALIBRATED 03/24/2024 using jig
+const float joint_max_pwm[5] = {640.0, 625.0, 620.0, 616.0, 650.0}; // CALIBRATED 03/24/2024 using jig
 
 // --- ALLOWABLE JOINT PARAMETERS ---
 const float joint_min_allowable_angles[5] = {45, 45, 45, 45, 10}; // TBD
@@ -55,12 +55,12 @@ const float joint_max_allowable_angles[5] {250, 250, 250, 250, 170};  // TBD
 
 // --- JOINT VARIABLES ---
 float joint_angles[5] = {135.0, 135.0, 135.0, 135.0, 90.0};
-int joint_pwm[5] = {390, 395, 395, 395, 390}; // TBD
+float joint_pwm[5] = {398.0, 387.0, 385.0, 381.0, 390.0};
 
 
 // --- ZERO VALUES ---
 const float zero_angles[5] = {135.0, 135.0, 135.0, 135.0, 90.0};
-const int zero_pos_pwm[5] = {390, 388, 383, 377, 390};
+const float zero_pos_pwm[5] = {398.0, 387.0, 385.0, 381.0, 390.0};
 
 
 // --- CHECK VARIABLES ---
@@ -90,13 +90,12 @@ void setup() {
 
   // Set up pins
 
-  time_0 = millis();
-
   // Set servos to initial position
   // Arguments of setPWM are (servo number, turn on, turn off)
   // Turn on: At what point in the 4096-part cycle to turn the PWM output ON
   // Turn off: At what point in the 4096-part cycle to turn the PWM output OFF
   force_vertical();
+  // set_zero_pwm();
   // servo_calibration();
   delay(500);
   timer = millis();
@@ -114,39 +113,28 @@ void loop() {
 // --- SERVO FUNCTIONS ---
 
 void servo_calibration() {
-  servo.setPWM(0, 0, 387);
-}
 
+  servo.setPWM(0, 0, 381);
+  delay(1000);
+  servo.setPWM(0, 0, 143);
+  delay(6000);
+  servo.setPWM(0, 0, 381);
+  delay(1000);
+  // servo.setPWM(0, 0, 154);
+  // delay(5000);
+  // servo.setPWM(0, 0, 387);
 
-void step_all_to_position(int target_angle) {
-  int target_pwm;
-  int pwm_diff[5];
-  int abs_pwm_diff[5];
-
-  target_reached = false;
-  target_pwm = angle_to_pwm(target_angle, 0, 180, SERVO_MIN, SERVO_MAX);
-
-  while (target_reached != true)  {
-    for (int i=0; i<num_servos; i++)  {
-
-      pwm_diff[i] = target_pwm - joint_pwm[i];
-      abs_pwm_diff[i] = abs(pwm_diff[i]);
-
-      if ((pwm_diff[i] > 0) && (abs_pwm_diff[i] > target_pwm_tolerance)) {
-        servo.setPWM(i, 0, joint_pwm[i]);
-        joint_pwm[i]+=pwm_step;
-      } else if ((pwm_diff[i] < 0) && (abs_pwm_diff[i] > target_pwm_tolerance))  {
-        servo.setPWM(i, 0, joint_pwm[i]);
-        joint_pwm[i]-=pwm_step;
-      } else if (abs_pwm_diff[i] <= target_pwm_tolerance)  {
-        target_reached = true;
-      }
-
-      current_angle[i] = pwm_to_angle(joint_pwm[i], SERVO_MIN, SERVO_MAX, 0, 180);
-
-      delay(step_delay);
-    }
-  }
+  // int zero = map(135, 0, 270, 154, 626);
+  // int min = map(0, 0, 270, 154, 626);
+  // int max = map(270, 0, 270, 154, 626);
+  // Serial.println(zero);
+  // servo.setPWM(0, 0, zero);
+  // delay(5000);
+  // servo.setPWM(0, 0, min);
+  // delay(5000);
+  // servo.setPWM(0, 0, max);
+  // delay(5000);
+  // servo.setPWM(0, 0, zero);
 }
 
 
@@ -159,88 +147,63 @@ void home() {
   }
 }
 
+
+void set_zero_pwm() {
+  for (int i=0; i<num_servos; i++) {
+    servo.setPWM(i, 0, zero_pos_pwm[i]);
+    joint_pwm[i] = zero_pos_pwm[i];
+  }
+
+}
+
 void force_vertical() {
   // for (int i=0; i<num_servos; i++) {
   //   servo.setPWM(i, 0, zero_pos_pwm[i]);
   //   joint_pwm[i] = zero_pos_pwm[i];
   float mutable_zero[5] = {zero_angles[0], zero_angles[1], zero_angles[2], zero_angles[3], zero_angles[4]};
-  set_joint_angles(mutable_zero);
+  step_joint_angles(mutable_zero);
   // }
 }
 
-// Useless function?
-void step_to_vertical() {
-  float vertical_targets[5] = {135, 135, 90, 90, 90};
-  set_joint_angles(vertical_targets);
-}
-
 // --- UTILITY FUNCTIONS ---
-int pwm_to_angle(int internal_pwm, int min_pwm, int max_pwm, int min_angle, int max_angle) {
-  int angle_output;
-
-  angle_output = map(internal_pwm, min_pwm, max_pwm, min_angle, max_angle);
-
-  return angle_output;
-}
-
-
-int angle_to_pwm(int angle_input, int min_angle, int max_angle, int min_pwm, int max_pwm) {
-  int pwm_output;
-
-  pwm_output = map(angle_input, min_angle, max_angle, min_pwm, max_pwm);
-
-  return pwm_output;
-}
 
 
 //  --- TEST FUNCTIONS ---
 
-void set_joint_angles(float joint_angle_targets[5]) {
-  // start_time = millis();
-  // Serial.print("start: ");
-  // Serial.println(start_time);
-
-  float joint_pwm_targets[5];
+void step_joint_angles(float joint_angle_targets[5]) {
   float joint_pwm_diffs[5];
 
-  for (int i=0; i<num_servos; i++)  {
+  for (int i=0; i<num_servos-1; i++)  {
     joint_target_reached[i] = false;
     joint_pwm_targets[i] = map(joint_angle_targets[i], 0, joint_max_angles[i], joint_min_pwm[i], joint_max_pwm[i]);
   }
 
-  // timer = millis();
-  // Serial.print("while start: ");
-  // Serial.println(timer);
 
   while (joint_target_reached[0]==false || joint_target_reached[1]==false || joint_target_reached[2]==false || joint_target_reached[3]==false)  {
-    for (int j=0; j<num_servos; j++)  {
+    for (int j=0; j<num_servos-1; j++)  {
 
-        joint_pwm_diffs[j] = joint_pwm_targets[j] - joint_pwm[j];
+      joint_pwm_diffs[j] = joint_pwm_targets[j] - joint_pwm[j];
 
-        // timer = millis();
-        // Serial.print("if start: ");
-        // Serial.println(timer);
-        if ((joint_pwm_diffs[j] > target_pwm_tolerance) && (joint_target_reached[j]!=true)) {
-          servo.setPWM(j, 0, joint_pwm[j]);
-          joint_pwm[j] += pwm_step;
-        } else if (joint_pwm_diffs[j] < -(target_pwm_tolerance) && (joint_target_reached[j]!=true))  {
-          servo.setPWM(j, 0, joint_pwm[j]);
-          joint_pwm[j] -= pwm_step;
-        } else  {
-          joint_target_reached[j] = true;
-        }
-
-        // timer = millis();
-        // Serial.print("if end: ");
-        // Serial.println(timer);
+      if ((joint_pwm_diffs[j] > target_pwm_tolerance) && (joint_target_reached[j]!=true)) {
+        servo.setPWM(j, 0, joint_pwm[j]);
+        joint_pwm[j] += pwm_step;
+      } else if (joint_pwm_diffs[j] < -(target_pwm_tolerance) && (joint_target_reached[j]!=true))  {
+        servo.setPWM(j, 0, joint_pwm[j]);
+        joint_pwm[j] -= pwm_step;
+      } else  {
+        joint_target_reached[j] = true;
       }
-      delay(step_delay);
-      
-      // end_time = millis();
-      // Serial.print("end: ");
-      // Serial.println(end_time);
     }
-  
+    delay(step_delay);
+  }
+}
+
+
+void go_to_position(float joint_angle_targets[5]) {
+  for (int i=0; i<num_servos; i++)  {
+    joint_pwm_targets[i] = map(joint_angle_targets[i], 0, joint_max_angles[i], joint_min_pwm[i], joint_max_pwm[i]);
+    servo.setPWM(i, 0, joint_pwm_targets[i]);
+  }
 }
 
 
@@ -254,7 +217,7 @@ void serial_read_test() {
 void serial_to_joint_angles() {
   if (Serial.available() > 0)  {
     
-    incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 30);
+    incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 35);
     Serial.read();  // Clear input buffer
     Serial.println(incoming_byte);
 
@@ -275,7 +238,7 @@ void serial_to_joint_angles() {
         joint_angles[i] = zero_angles[i] + joint_angles[i];
       }
     }
-
-    set_joint_angles(joint_angles);
+    
+    step_joint_angles(joint_angles);
   }
 }

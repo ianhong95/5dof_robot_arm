@@ -10,11 +10,11 @@ import robot_class as robot
 def main():
     test_robot = robot.Robot_Arm()
 
-    translate_1 = [0.06, 0, -0.06]
-    translate_2 = [-0.06, 0, 0.06]
+    translate_1 = [0.04, 0, -0.06]
+    translate_2 = [-0.04, 0, 0.06]
 
     test_robot.home()
-    sleep(3)
+    sleep(2)
 
     test_robot.translate_xyz(translate_1[0], translate_1[1], translate_1[2])
 
@@ -28,9 +28,7 @@ def main():
     test_robot.set_joint_angles(vert)
 
     sleep(2)
-
     
-
 
 if __name__=="__main__":
     main()

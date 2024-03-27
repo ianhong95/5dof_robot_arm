@@ -28,12 +28,12 @@ class Robot_Arm:
         self.rot_z = np.array([0, 0, 1])
 
         # INITIALIZE POSITION
-        self.current_pos = np.array([[1, 0, 0, 0],
+        self.current_pose = np.array([[1, 0, 0, 0],
                                      [0, 1, 0, 0],
                                      [0, 0, 1, 0.551],
                                      [0, 0, 0, 1]])
-        self.current_pose = np.array([0, 0, 0.551])
-        self.home_pos = np.array([[1, 0, 0, 0.12],
+        self.current_pos = np.array([self.current_pose[0][3], self.current_pose[1][3], self.current_pose[2][3]])
+        self.home_pose = np.array([[1, 0, 0, 0.12],
                                   [0, 1, 0, 0],
                                   [0, 0, -1, 0.12],
                                   [0, 0, 0, 1]])
@@ -95,7 +95,9 @@ class Robot_Arm:
         return encoded_list
     
 
-    def serial_write(self, encoded_angle_list):
+    def serial_write(self, raw_angle_list):
+        encoded_angle_list = self.encode_data(raw_angle_list)
+
         string_to_send = encoded_angle_list[0] + self.DELIMITER + encoded_angle_list[1] + self.DELIMITER + encoded_angle_list[2] + self.DELIMITER + encoded_angle_list[3] + self.DELIMITER + encoded_angle_list[4] + self.END_CHAR
         print(string_to_send)
         self.serial_port.write(string_to_send)
@@ -104,12 +106,13 @@ class Robot_Arm:
 
     # --- GO TO PRE-DEFINED POSITIONS ---
     def home(self):
-        target_joint_angles = self.compute_ik(self.home_pos)
+        target_joint_angles = self.compute_ik(self.home_pose)
         
-        encoded_data = self.encode_data(self.joint_angles)
-        self.serial_write(encoded_data)
+        self.serial_write(target_joint_angles)
 
-        self.current_pos = self.home_pos
+        self.current_pose = self.home_pose
+        self.update_current_pos(self.current_pose)
+        print(f'current position: {self.current_pos}')
 
         return target_joint_angles
 
@@ -121,8 +124,8 @@ class Robot_Arm:
             self.joint_angles[i] = input_angles[i]
             joint_angle_list.append(self.joint_angles[i])
 
-        encoded_data = self.encode_data(joint_angle_list)
-        self.serial_write(encoded_data)
+        self.serial_write(joint_angle_list)
+        print(joint_angle_list)
 
 
     def move_to_point(self, target_abs_coords):
@@ -148,11 +151,10 @@ class Robot_Arm:
 
     def tf_move(self, tf_mat):
         target_joint_angles = self.compute_ik(tf_mat)
-        # self.angles_to_bytes()
-        encoded_data = self.encode_data(self.joint_angles)
-        self.serial_write(encoded_data)
 
-        # update orientation vectors
+        self.serial_write(self.joint_angles)
+
+        # TO DO: update orientation vectors
 
 
         return target_joint_angles
@@ -163,23 +165,48 @@ class Robot_Arm:
         pos_vector = np.array([x, y, z])
         target_rads = []
 
-        new_frame_mat = k.tf_from_position(pos_vector, self.current_pos)
+        new_frame_mat = k.tf_from_position(pos_vector, self.current_pose)
         target_joint_angles = self.compute_ik(new_frame_mat)
-        print(f'new targets: {target_joint_angles}')
 
-        encoded_data = self.encode_data(target_joint_angles)
-        self.serial_write(encoded_data)
-
-        print(target_joint_angles)
+        self.serial_write(target_joint_angles)
 
         for i in range(len(target_joint_angles)):
             target_rads.append(radians(target_joint_angles[i]))
 
-        self.current_pos = new_frame_mat
-        # current_pos = self.current_pos
+        self.current_pose = new_frame_mat
+        self.update_current_pos(self.current_pose)
+        print(f'current position: {self.current_pos}')
+
         
         
         return target_rads
+    
+
+    # --- Simple relative move commands in mm---
+
+    def move_x(self, x_increment):
+        x = self.current_pose[0][3] + x_increment
+        new_pos_vector = np.array([x, self.current_pose[1][3], self.current_pose[2][3]])
+        new_frame_mat = k.tf_from_position(new_pos_vector, self.current_pose)
+        target_joint_angles = self.compute_ik(new_frame_mat)
+
+        self.serial_write(target_joint_angles)
+
+
+    def move_y(self, y_increment):
+        y = self.current_pose[1][3] + y_increment
+        new_pos_vector = np.array([self.current_pose[0][3], y, self.current_pose[2][3]])
+        new_frame_mat = k.tf_from_position(new_pos_vector, self.current_pose)
+        target_joint_angles = self.compute_ik(new_frame_mat)
+
+        self.serial_write(target_joint_angles)
+
+    
+    def move_z(self, z_increment):
+        z = self.current_pose[2][3] + z_increment
+        new_pos_vector = np.array([self.current_pose[0][3], self.current_pose[1][3], z])
+        new_frame_mat = k.tf_from_position(new_pos_vector, self.current_pose)
+        target_joint_angles = self.compute_ik(new_frame_mat)     
     
 
     # --- Sync all motors to arrive at target at the same time
@@ -191,3 +218,11 @@ class Robot_Arm:
             angle_step_list.append(angle_step)
 
         return angle_step_list
+    
+
+    # --- Misc Functions
+
+    def update_current_pos(self, pose):
+        self.current_pos[0] = pose[0][3]
+        self.current_pos[1] = pose[1][3]
+        self.current_pos[2] = pose[2][3]

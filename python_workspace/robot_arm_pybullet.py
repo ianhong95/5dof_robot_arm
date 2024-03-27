@@ -38,7 +38,7 @@ def go_to_pos(robot, pos_vec):
     test_joint_angles = []
     test_joint_angles = robot.translate_xyz(pos_vec[0], pos_vec[1], pos_vec[2])
 
-    for i in range(2000):
+    for i in range(5000):
         pybullet.setJointMotorControlArray(bodyIndex=ROBOT_ID,
                                         jointIndices=[0, 1, 2, 3, 4],
                                         controlMode=pybullet.POSITION_CONTROL,
@@ -64,17 +64,14 @@ def apply_frame(robot, frame):
 def main():
     test_robot = robot.Robot_Arm()
 
-    TEST_TF_MATRIX = np.array([[1, 0, 0, 0.18],
-                                [0, 1, 0, 0],
-                                [0, 0, -1, 0.06],
-                                [0, 0, 0, 1]])
+    test_robot.home()
     
-    test_robot.current_pos = TEST_TF_MATRIX
+    # test_robot.current_pos = TEST_TF_MATRIX
 
-    initial_pos_angles = apply_frame(test_robot, TEST_TF_MATRIX)
+    # initial_pos_angles = apply_frame(test_robot, TEST_TF_MATRIX)
     # test_robot.set_joint_angles(initial_pos_angles)
-    translate_1 = [0.02, 0, 0.02]
-    translate_2 = [-0.05, 0, -0.05]
+    translate_1 = [0.04, 0, 0.06]
+    translate_2 = [-0.04, 0, -0.06]
             
     go_to_pos(test_robot, translate_1)
     go_to_pos(test_robot, translate_2)
