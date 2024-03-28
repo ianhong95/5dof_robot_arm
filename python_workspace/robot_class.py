@@ -111,7 +111,7 @@ class Robot_Arm:
         self.serial_write(target_joint_angles)
 
         self.current_pose = self.home_pose
-        self.update_current_pos(self.current_pose)
+        self.update_current_pose(self.current_pose)
         print(f'current position: {self.current_pos}')
 
         return target_joint_angles
@@ -174,39 +174,42 @@ class Robot_Arm:
             target_rads.append(radians(target_joint_angles[i]))
 
         self.current_pose = new_frame_mat
-        self.update_current_pos(self.current_pose)
+        self.update_current_pose(self.current_pose)
         print(f'current position: {self.current_pos}')
 
-        
-        
         return target_rads
     
 
     # --- Simple relative move commands in mm---
 
     def move_x(self, x_increment):
-        x = self.current_pose[0][3] + x_increment
-        new_pos_vector = np.array([x, self.current_pose[1][3], self.current_pose[2][3]])
-        new_frame_mat = k.tf_from_position(new_pos_vector, self.current_pose)
+        translation_vector = np.array([x_increment, 0, 0])
+        new_frame_mat = k.tf_from_position(translation_vector, self.current_pose)
         target_joint_angles = self.compute_ik(new_frame_mat)
+
+        self.update_current_pose(new_frame_mat)
 
         self.serial_write(target_joint_angles)
 
 
     def move_y(self, y_increment):
-        y = self.current_pose[1][3] + y_increment
-        new_pos_vector = np.array([self.current_pose[0][3], y, self.current_pose[2][3]])
-        new_frame_mat = k.tf_from_position(new_pos_vector, self.current_pose)
+        translation_vector = np.array([0, y_increment, 0])
+        new_frame_mat = k.tf_from_position(translation_vector, self.current_pose)
         target_joint_angles = self.compute_ik(new_frame_mat)
+
+        self.update_current_pose(new_frame_mat)
 
         self.serial_write(target_joint_angles)
 
     
     def move_z(self, z_increment):
-        z = self.current_pose[2][3] + z_increment
-        new_pos_vector = np.array([self.current_pose[0][3], self.current_pose[1][3], z])
-        new_frame_mat = k.tf_from_position(new_pos_vector, self.current_pose)
-        target_joint_angles = self.compute_ik(new_frame_mat)     
+        translation_vector = np.array([0, 0, z_increment])
+        new_frame_mat = k.tf_from_position(translation_vector, self.current_pose)
+        target_joint_angles = self.compute_ik(new_frame_mat)
+
+        self.update_current_pose(new_frame_mat)
+
+        self.serial_write(target_joint_angles)
     
 
     # --- Sync all motors to arrive at target at the same time
@@ -222,7 +225,11 @@ class Robot_Arm:
 
     # --- Misc Functions
 
-    def update_current_pos(self, pose):
+    def update_current_pose(self, pose):
+        self.current_pose = pose
+
+        print(pose)
+
         self.current_pos[0] = pose[0][3]
         self.current_pos[1] = pose[1][3]
         self.current_pos[2] = pose[2][3]

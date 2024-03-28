@@ -178,20 +178,29 @@ void step_joint_angles(float joint_angle_targets[5]) {
     joint_pwm_targets[i] = map(joint_angle_targets[i], 0, joint_max_angles[i], joint_min_pwm[i], joint_max_pwm[i]);
   }
 
+  // Serial.println("PWM targets: ");
+  // Serial.println(joint_pwm_targets[0]);
+  // Serial.println(joint_pwm_targets[1]);
+  // Serial.println(joint_pwm_targets[2]);
+  // Serial.println(joint_pwm_targets[3]);
+
 
   while (joint_target_reached[0]==false || joint_target_reached[1]==false || joint_target_reached[2]==false || joint_target_reached[3]==false)  {
     for (int j=0; j<num_servos-1; j++)  {
 
       joint_pwm_diffs[j] = joint_pwm_targets[j] - joint_pwm[j];
+      // Serial.println(joint_pwm_diffs[j]);
 
       if ((joint_pwm_diffs[j] > target_pwm_tolerance) && (joint_target_reached[j]!=true)) {
-        servo.setPWM(j, 0, joint_pwm[j]);
         joint_pwm[j] += pwm_step;
-      } else if (joint_pwm_diffs[j] < -(target_pwm_tolerance) && (joint_target_reached[j]!=true))  {
         servo.setPWM(j, 0, joint_pwm[j]);
+      } else if (joint_pwm_diffs[j] < -(target_pwm_tolerance) && (joint_target_reached[j]!=true))  {
         joint_pwm[j] -= pwm_step;
+        servo.setPWM(j, 0, joint_pwm[j]);
       } else  {
         joint_target_reached[j] = true;
+        // Serial.println("Final PWM: ");
+        // Serial.println(joint_pwm[j]);
       }
     }
     delay(step_delay);
@@ -219,6 +228,7 @@ void serial_to_joint_angles() {
     
     incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 35);
     Serial.read();  // Clear input buffer
+    Serial.println("Data received!");
     Serial.println(incoming_byte);
 
     char *token = strtok(incoming_buffer, DELIMITER);
@@ -238,6 +248,12 @@ void serial_to_joint_angles() {
         joint_angles[i] = zero_angles[i] + joint_angles[i];
       }
     }
+
+    Serial.print("Joint angles: ");
+    // Serial.println(joint_angles[0]);
+    // Serial.println(joint_angles[1]);
+    // Serial.println(joint_angles[2]);
+    // Serial.println(joint_angles[4]);
     
     step_joint_angles(joint_angles);
   }

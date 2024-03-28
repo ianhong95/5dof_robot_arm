@@ -14,15 +14,27 @@ def main():
     translate_2 = [-0.04, 0, 0.06]
 
     test_robot.home()
-    sleep(2)
+    sleep(3)
 
-    test_robot.translate_xyz(translate_1[0], translate_1[1], translate_1[2])
+    test_robot.move_z(-0.05)
 
-    sleep(2)
+    sleep(1)
 
-    test_robot.translate_xyz(translate_2[0], translate_2[1], translate_2[2])
+    test_robot.move_z(0.05)
 
-    sleep(2)
+    sleep(1)
+
+    test_robot.move_z(-0.05)
+
+    sleep(1)
+
+    test_robot.move_x(0.05)
+
+    sleep(1)
+
+    test_robot.move_x(-0.05)
+
+    sleep(1)
 
     vert = [0.000, 0.000, 0.000, 0.000, 0.000]
     test_robot.set_joint_angles(vert)

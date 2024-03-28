@@ -239,6 +239,8 @@ def tf_from_position(position_mtx, current_frame):
 
     new_frame = translation_mtx @ current_frame
 
+    print(new_frame)
+
     return new_frame
 
 
