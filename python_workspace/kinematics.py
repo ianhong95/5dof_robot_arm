@@ -196,6 +196,9 @@ def calc_theta_2(wrist_pos_vector, theta_3):
     numerator = ((0.0991 + 0.126 * cos(theta_3)) * b) + (a * 0.126 * sin(theta_3))
     denominator = (a**2) + (b**2)
 
+    print(f'numerator: {numerator}')
+    print(f'denominator: {denominator}')
+
     theta_2 = acos(numerator/denominator)
 
     return theta_2
@@ -238,8 +241,6 @@ def tf_from_position(position_mtx, current_frame):
                                 [0, 0, 0, 1]])
 
     new_frame = translation_mtx @ current_frame
-
-    print(new_frame)
 
     return new_frame
 

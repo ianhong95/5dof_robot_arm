@@ -9,32 +9,22 @@ import robot_class as robot
 
 def main():
     test_robot = robot.Robot_Arm()
+    move_delay = 0.5
+    long_delay = 0.8
 
-    translate_1 = [0.04, 0, -0.06]
-    translate_2 = [-0.04, 0, 0.06]
+    test_robot.home(2)
 
-    test_robot.home()
-    sleep(3)
+    test_robot.move_z(0.01, move_delay)
 
-    test_robot.move_z(-0.05)
+    test_robot.move_z(-0.01, move_delay)
 
-    sleep(1)
+    test_robot.move_z(-0.05, move_delay)
 
-    test_robot.move_z(0.05)
+    test_robot.move_x(0.05, long_delay)
 
-    sleep(1)
+    test_robot.move_x(-0.05, long_delay)
 
-    test_robot.move_z(-0.05)
-
-    sleep(1)
-
-    test_robot.move_x(0.05)
-
-    sleep(1)
-
-    test_robot.move_x(-0.05)
-
-    sleep(1)
+    test_robot.home(1)
 
     vert = [0.000, 0.000, 0.000, 0.000, 0.000]
     test_robot.set_joint_angles(vert)
