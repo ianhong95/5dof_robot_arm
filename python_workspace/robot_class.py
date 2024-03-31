@@ -34,9 +34,9 @@ class Robot_Arm:
                                      [0, 0, 1, 0.551],
                                      [0, 0, 0, 1]])
         self.current_pos = np.array([self.current_pose[0][3], self.current_pose[1][3], self.current_pose[2][3]])
-        self.home_pose = np.array([[1, 0, 0, 0.12],
+        self.home_pose = np.array([[1, 0, 0, 0.2],
                                   [0, 1, 0, 0],
-                                  [0, 0, -1, 0.12],
+                                  [0, 0, -1, 0.18],
                                   [0, 0, 0, 1]])
         self.home_rot_pitch = pi
 
@@ -106,7 +106,7 @@ class Robot_Arm:
 
 
     # --- GO TO PRE-DEFINED POSITIONS ---
-    def home(self, delay):
+    def home(self, delay=0):
         target_joint_angles = self.compute_ik(self.home_pose)
         
         self.serial_write(target_joint_angles)
@@ -163,7 +163,7 @@ class Robot_Arm:
 
     # --- RELATIVE MOTION FUNCTIONS ---
 
-    def translate_xyz(self, x, y, z, delay):
+    def translate_xyz(self, x, y, z, delay=0):
         translation_vector = np.array([x, y, z])
         target_rads = []
 

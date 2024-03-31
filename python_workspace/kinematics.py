@@ -131,9 +131,9 @@ def calc_wrist_position(tf_mat):
     rot_mat = tf_mat[:3,:3]
     pos_vec = tf_mat[:3, 3].transpose()
 
-    wx = pos_vec[0] - (0.0601 * rot_mat[:3, 2][0].transpose())
-    wy = pos_vec[1] - (0.0601 * rot_mat[:3, 2][1].transpose())
-    wz = pos_vec[2] - (0.0601 * rot_mat[:3, 2][2].transpose())
+    wx = pos_vec[0] - ((85/1000) * rot_mat[:3, 2][0].transpose())
+    wy = pos_vec[1] - ((85/1000) * rot_mat[:3, 2][1].transpose())
+    wz = pos_vec[2] - ((85/1000) * rot_mat[:3, 2][2].transpose())
 
     # print(f'wx: {wx}')
     # print(f'wy: {wy}')
@@ -171,10 +171,10 @@ def calc_theta_3(wrist_pos_vector):
     wz = wrist_pos_vector[2]
 
     a = sqrt((wx**2) + (wy**2))
-    b = wz - 0.0991
+    b = wz - 0.121  # wz - d1
 
-    numerator = ((a**2) + (b**2) - (0.0991**2) - (0.126**2))
-    denominator = 2 * 0.0991 * 0.126
+    numerator = ((a**2) + (b**2) - (0.17255**2) - (0.17255**2))
+    denominator = 2 * (0.17255) * 0.17255
 
     try:
         theta_3 = acos(numerator/denominator)
@@ -191,9 +191,9 @@ def calc_theta_2(wrist_pos_vector, theta_3):
     wz = wrist_pos_vector[2]
 
     a = sqrt((wx**2) + (wy**2))
-    b = wz - 0.0991
+    b = wz - 0.121
 
-    numerator = ((0.0991 + 0.126 * cos(theta_3)) * b) + (a * 0.126 * sin(theta_3))
+    numerator = ((0.17255 + 0.17255 * cos(theta_3)) * b) + (a * 0.17255 * sin(theta_3))
     denominator = (a**2) + (b**2)
 
     print(f'numerator: {numerator}')

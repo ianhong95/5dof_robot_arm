@@ -13,9 +13,6 @@
 
 Adafruit_PWMServoDriver servo = Adafruit_PWMServoDriver(0x40);
 
-#define SERVO_MIN 100
-#define SERVO_MAX 660
-
 #define USMIN  600 // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
 #define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define SERVO_FREQ 60 // Analog servos run at ~50 Hz updates
@@ -42,6 +39,8 @@ const int pwm_step = 1;
 const int step_delay = 5;
 float pwm_increments[5] = {2, 1.74817482, 1.7055, 1.7889, 2};  // pwm increase per degree of rotation
 float joint_pwm_targets[5];
+const float GRIPPER_MIN_PWM;
+const float GRIPPER_MAX_PWM;
 
 
 // --- PHYSICAL JOINT PARAMETERS ---
@@ -222,11 +221,11 @@ void serial_read_test() {
   }
 }
 
-
+// General function for handling incoming serial data
 void serial_to_joint_angles() {
   if (Serial.available() > 0)  {
     
-    incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 35);
+    incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 50);
     Serial.read();  // Clear input buffer
     Serial.println("Data received!");
     Serial.println(incoming_byte);
@@ -257,4 +256,14 @@ void serial_to_joint_angles() {
     
     step_joint_angles(joint_angles);
   }
+}
+
+
+void move_arm(char incoming_data) {
+
+}
+
+
+void set_gripper(char incoming_data)  {
+
 }
