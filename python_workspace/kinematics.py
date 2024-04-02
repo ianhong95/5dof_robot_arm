@@ -54,7 +54,7 @@ def compute_DH_params(joint_angles):
             "alpha": pi/2
         },
         "joint_5":  {
-            "d": 85/1000.0,
+            "d": 173/1000.0,
             "theta": theta_values[4],
             "a": 0,
             "alpha": 0
@@ -131,9 +131,9 @@ def calc_wrist_position(tf_mat):
     rot_mat = tf_mat[:3,:3]
     pos_vec = tf_mat[:3, 3].transpose()
 
-    wx = pos_vec[0] - ((85/1000) * rot_mat[:3, 2][0].transpose())
-    wy = pos_vec[1] - ((85/1000) * rot_mat[:3, 2][1].transpose())
-    wz = pos_vec[2] - ((85/1000) * rot_mat[:3, 2][2].transpose())
+    wx = pos_vec[0] - ((173/1000) * rot_mat[:3, 2][0].transpose())
+    wy = pos_vec[1] - ((173/1000) * rot_mat[:3, 2][1].transpose())
+    wz = pos_vec[2] - ((173/1000) * rot_mat[:3, 2][2].transpose())
 
     # print(f'wx: {wx}')
     # print(f'wy: {wy}')
@@ -195,9 +195,6 @@ def calc_theta_2(wrist_pos_vector, theta_3):
 
     numerator = ((0.17255 + 0.17255 * cos(theta_3)) * b) + (a * 0.17255 * sin(theta_3))
     denominator = (a**2) + (b**2)
-
-    print(f'numerator: {numerator}')
-    print(f'denominator: {denominator}')
 
     theta_2 = acos(numerator/denominator)
 

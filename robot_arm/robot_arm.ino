@@ -26,12 +26,13 @@ uint8_t servonum = 0; // initialize servo counter
 
 // Define other variables
 int pwm;
-const int num_servos = 5;
+const int num_servos = 6;
 unsigned long time_0;
 unsigned long new_time;
 int timer;
 int start_time;
 int end_time;
+const int GRIPPER_SERVO_IDX = 5;
 
 // --- PWM PARAMETERS ---
 const int target_pwm_tolerance = 1;
@@ -39,8 +40,8 @@ const int pwm_step = 1;
 const int step_delay = 5;
 float pwm_increments[5] = {2, 1.74817482, 1.7055, 1.7889, 2};  // pwm increase per degree of rotation
 float joint_pwm_targets[5];
-const float GRIPPER_MIN_PWM;
-const float GRIPPER_MAX_PWM;
+const float GRIPPER_MIN_PWM = 130;  // TBD
+const float GRIPPER_MAX_PWM = 385;  // TBD
 
 
 // --- PHYSICAL JOINT PARAMETERS ---
@@ -54,7 +55,9 @@ const float joint_max_allowable_angles[5] {250, 250, 250, 250, 170};  // TBD
 
 // --- JOINT VARIABLES ---
 float joint_angles[5] = {135.0, 135.0, 135.0, 135.0, 90.0};
+int gripper_state_buffer[2];
 float joint_pwm[5] = {398.0, 387.0, 385.0, 381.0, 390.0};
+float adjusted_joint_angles[5]; // Adjusted based on zero positions and servo orientation
 
 
 // --- ZERO VALUES ---
@@ -113,11 +116,11 @@ void loop() {
 
 void servo_calibration() {
 
-  servo.setPWM(0, 0, 381);
-  delay(1000);
-  servo.setPWM(0, 0, 143);
-  delay(6000);
-  servo.setPWM(0, 0, 381);
+  servo.setPWM(4, 0, 130);
+  delay(2000);
+  servo.setPWM(4, 0, 385);
+  delay(3000);
+  servo.setPWM(4, 0, 130);
   delay(1000);
   // servo.setPWM(0, 0, 154);
   // delay(5000);
@@ -177,18 +180,10 @@ void step_joint_angles(float joint_angle_targets[5]) {
     joint_pwm_targets[i] = map(joint_angle_targets[i], 0, joint_max_angles[i], joint_min_pwm[i], joint_max_pwm[i]);
   }
 
-  // Serial.println("PWM targets: ");
-  // Serial.println(joint_pwm_targets[0]);
-  // Serial.println(joint_pwm_targets[1]);
-  // Serial.println(joint_pwm_targets[2]);
-  // Serial.println(joint_pwm_targets[3]);
-
-
   while (joint_target_reached[0]==false || joint_target_reached[1]==false || joint_target_reached[2]==false || joint_target_reached[3]==false)  {
     for (int j=0; j<num_servos-1; j++)  {
 
       joint_pwm_diffs[j] = joint_pwm_targets[j] - joint_pwm[j];
-      // Serial.println(joint_pwm_diffs[j]);
 
       if ((joint_pwm_diffs[j] > target_pwm_tolerance) && (joint_target_reached[j]!=true)) {
         joint_pwm[j] += pwm_step;
@@ -198,8 +193,6 @@ void step_joint_angles(float joint_angle_targets[5]) {
         servo.setPWM(j, 0, joint_pwm[j]);
       } else  {
         joint_target_reached[j] = true;
-        // Serial.println("Final PWM: ");
-        // Serial.println(joint_pwm[j]);
       }
     }
     delay(step_delay);
@@ -228,42 +221,44 @@ void serial_to_joint_angles() {
     incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 50);
     Serial.read();  // Clear input buffer
     Serial.println("Data received!");
-    Serial.println(incoming_byte);
 
-    char *token = strtok(incoming_buffer, DELIMITER);
-    int tok_counter = 0;
-    
-    while(token != NULL)  {
-      float fl_tok = atof(token);
-      joint_angles[tok_counter] = fl_tok;
-      token = strtok(NULL, DELIMITER);
-      tok_counter++;
-    }
+    if (incoming_buffer[0] == START_MARKER) {
+      set_gripper(incoming_buffer[2]);
+    } else {
+      // Parse the incoming data and split it along the delimiters, then build a list of values
+      // First call of strtok takes the initial string. The first non-leading delimiter is replaced with a NULL character.
+      char *token = strtok(incoming_buffer, DELIMITER);
+      int tok_counter = 0;
+      
+      while(token != NULL)  {
+        float fl_tok = atof(token); // Initialize a float, assign it a value using atof based on the token (index)
+        joint_angles[tok_counter] = fl_tok; // Put a float into the joint_angles[] array
 
-    for (int i=0; i<(num_servos-1); i++)  {
-      if(i==1)  {
-        joint_angles[i] = zero_angles[i] - joint_angles[i]; // This servo is mounted in reverse
-      } else {
-        joint_angles[i] = zero_angles[i] + joint_angles[i];
+        // When the strtok() function is called with a NULL string1 argument, the next token is read from a stored copy of the last non-null string1 parameter. Each delimiter is replaced by a null character.
+        token = strtok(NULL, DELIMITER);
+        tok_counter++;
       }
-    }
+      // End parsing
 
-    Serial.print("Joint angles: ");
-    // Serial.println(joint_angles[0]);
-    // Serial.println(joint_angles[1]);
-    // Serial.println(joint_angles[2]);
-    // Serial.println(joint_angles[4]);
-    
-    step_joint_angles(joint_angles);
+      // Move joints
+      for (int i=0; i<(num_servos-1); i++)  {
+        if(i==1)  {
+          adjusted_joint_angles[i] = zero_angles[i] - joint_angles[i]; // This servo is mounted in reverse
+        } else {
+          adjusted_joint_angles[i] = zero_angles[i] + joint_angles[i];
+        }
+      }
+      
+      step_joint_angles(adjusted_joint_angles);
+    }
   }
 }
 
 
-void move_arm(char incoming_data) {
-
-}
-
-
-void set_gripper(char incoming_data)  {
-
+void set_gripper(char gripper_pos)  {
+  if (gripper_pos=='0')  {
+    servo.setPWM(GRIPPER_SERVO_IDX, 0, 385);
+  } else if (gripper_pos=='1')  {
+    servo.setPWM(GRIPPER_SERVO_IDX, 0, 130);
+  }
 }

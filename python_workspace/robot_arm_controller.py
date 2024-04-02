@@ -16,6 +16,17 @@ def main():
 
     test_robot.move_z(0.05, move_delay)
 
+    test_robot.set_gripper(0)
+
+    sleep(2)
+
+    test_robot.set_gripper(1)
+
+    sleep(2)
+
+    test_robot.set_gripper(0)
+
+
     test_robot.move_z(-0.05, move_delay)
 
     # test_robot.move_z(-0.05, move_delay)

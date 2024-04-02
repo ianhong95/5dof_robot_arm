@@ -34,11 +34,12 @@ class Robot_Arm:
                                      [0, 0, 1, 0.551],
                                      [0, 0, 0, 1]])
         self.current_pos = np.array([self.current_pose[0][3], self.current_pose[1][3], self.current_pose[2][3]])
-        self.home_pose = np.array([[1, 0, 0, 0.2],
+        self.home_pose = np.array([[1, 0, 0, 0.18],
                                   [0, 1, 0, 0],
-                                  [0, 0, -1, 0.18],
+                                  [0, 0, -1, 0.06],
                                   [0, 0, 0, 1]])
         self.home_rot_pitch = pi
+        self.gripper_state = b'1'
 
         print("Class initialized!")
 
@@ -70,7 +71,6 @@ class Robot_Arm:
     def compute_tf_mat(self, roll, pitch, yaw, pos_vec):    # roll should 0 because there's no roll motor.
         rot_vec = R.from_euler('xyz', [roll, pitch, yaw], degrees=False)
         rot_mat = R.as_matrix(rot_vec)
-        print(f"rot_mat: {rot_mat}")
 
         # Build transformation matrix from rotation matrix and position vector
         tf_mat = np.array([[rot_mat[0][0], rot_mat[0][1], rot_mat[0][2], pos_vec[0]],
@@ -96,12 +96,18 @@ class Robot_Arm:
         return encoded_list
     
 
-    def serial_write(self, raw_angle_list):
-        encoded_angle_list = self.encode_data(raw_angle_list)
+    def serial_write(self, raw_angle_list=[], gripper=1):
+        print(raw_angle_list)
+        if len(raw_angle_list) > 0:
+            encoded_angle_list = self.encode_data(raw_angle_list)
 
-        string_to_send = encoded_angle_list[0] + self.DELIMITER + encoded_angle_list[1] + self.DELIMITER + encoded_angle_list[2] + self.DELIMITER + encoded_angle_list[3] + self.DELIMITER + encoded_angle_list[4] + self.END_CHAR
-        print(string_to_send)
-        self.serial_port.write(string_to_send)
+            string_to_send = encoded_angle_list[0] + self.DELIMITER + encoded_angle_list[1] + self.DELIMITER + encoded_angle_list[2] + self.DELIMITER + encoded_angle_list[3] + self.DELIMITER + encoded_angle_list[4] + self.END_CHAR
+            print(string_to_send)
+            self.serial_port.write(string_to_send)
+        else:
+            string_to_send = self.START_CHAR + self. DELIMITER + str(gripper).encode() + self.END_CHAR
+            self.serial_port.write(string_to_send)
+
         self.serial_port.flush()
 
 
@@ -113,7 +119,6 @@ class Robot_Arm:
 
         self.current_pose = self.home_pose
         self.update_current_pose(self.current_pose)
-        print(f'current position: {self.current_pos}')
 
         time.sleep(delay)
 
@@ -139,6 +144,11 @@ class Robot_Arm:
         target_joint_angles = self.tf_move(tf_mat)
 
         return target_joint_angles
+
+
+    def set_gripper(self, state=0):
+        # 1 = closed, 0 = open
+        self.serial_write(gripper=state)
 
 
     def set_orientation_rpy(self, roll, pitch, yaw):
@@ -176,7 +186,6 @@ class Robot_Arm:
             target_rads.append(radians(target_joint_angles[i]))
 
         self.update_current_pose(new_frame_mat)
-        print(f'current position: {self.current_pos}')
 
         time.sleep(delay)
 
@@ -233,8 +242,6 @@ class Robot_Arm:
 
     def update_current_pose(self, pose):
         self.current_pose = pose
-
-        print(pose)
 
         self.current_pos[0] = pose[0][3]
         self.current_pos[1] = pose[1][3]
