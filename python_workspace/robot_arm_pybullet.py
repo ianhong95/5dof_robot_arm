@@ -21,6 +21,11 @@ POS_2 = np.array([[1, 0, 0, 0.2],
                   [0, 0, -1, 0.1],
                   [0, 0, 0, 1]])
 
+home_pose = np.array([[1, 0, 0, 0.15],
+                        [0, 1, 0, 0],
+                        [0, 0, -1, 0.1],
+                        [0, 0, 0, 1]])
+
 
 def get_joint_angles():
     joint_angles = []
@@ -53,18 +58,24 @@ def apply_frame(robot, frame):
     for i in range(len(target_joint_angles)):
         target_rads.append(radians(target_joint_angles[i]))
 
-    for i in range(2000):
+    for i in range(10000):
         pybullet.setJointMotorControlArray(bodyIndex=ROBOT_ID,
                                         jointIndices=[0, 1, 2, 3, 4],
                                         controlMode=pybullet.POSITION_CONTROL,
                                         targetPositions=[target_rads[0], target_rads[1], target_rads[2], target_rads[3], target_rads[4]])
+        pybullet.stepSimulation()
+        time.sleep(1./500.)
 
     return target_rads
 
 def main():
     test_robot = robot.Robot_Arm()
 
-    test_robot.home()
+
+    apply_frame(test_robot, home_pose)
+
+
+
     
     # test_robot.current_pos = TEST_TF_MATRIX
 

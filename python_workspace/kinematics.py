@@ -2,6 +2,35 @@ from math import sin, cos, atan, atan2, pi, sqrt, acos, asin
 import numpy as np
 
 
+# --- PHYSICAL ROBOT PARAMETERS ---
+DH_PARAMETERS = {
+        "joint_1": {
+            "d": 121/1000.0,
+            "a": 0,
+            "alpha": pi/2
+        },
+        "joint_2": {
+            "d": 0,
+            "a": 172.55/1000.0,
+            "alpha": 0
+        },
+        "joint_3": {
+            "d": 0,
+            "a": 172.55/1000.0,
+            "alpha": 0
+        },
+        "joint_4": {
+            "d": 0,
+            "a": 0,
+            "alpha": pi/2
+        },
+        "joint_5":  {
+            "d": 173/1000.0,
+            "a": 0,
+            "alpha": 0
+        }
+    }
+
 # --- FORWARD KINEMATICS ---
 
 def calc_frame_matrix(nx, ny, nz, ox, oy, oz, ax, ay, az, Px, Py, Pz):
@@ -28,52 +57,52 @@ def compute_DH_params(joint_angles):
     for angle in joint_angles:
         theta_values.append(angle)
 
-    DH_parameters = {
+    computed_DH_params = {
         "joint_1": {
-            "d": 121/1000.0,
+            "d": DH_PARAMETERS["joint_1"]["d"],
             "theta": theta_values[0],
-            "a": 0,
-            "alpha": pi/2
+            "a": DH_PARAMETERS["joint_1"]["a"],
+            "alpha": DH_PARAMETERS["joint_1"]["alpha"]
         },
         "joint_2": {
-            "d": 0,
+            "d": DH_PARAMETERS["joint_2"]["d"],
             "theta": theta_values[1] + pi/2,
-            "a": 172.55/1000.0,
-            "alpha": 0
+            "a": DH_PARAMETERS["joint_2"]["a"],
+            "alpha": DH_PARAMETERS["joint_2"]["alpha"]
         },
         "joint_3": {
-            "d": 0,
+            "d": DH_PARAMETERS["joint_3"]["d"],
             "theta": theta_values[2],
-            "a": 172.55/1000.0,
-            "alpha": 0
+            "a": DH_PARAMETERS["joint_3"]["a"],
+            "alpha": DH_PARAMETERS["joint_3"]["alpha"]
         },
         "joint_4": {
-            "d": 0,
+            "d": DH_PARAMETERS["joint_4"]["d"],
             "theta": theta_values[3] + pi/2,
-            "a": 0,
-            "alpha": pi/2
+            "a": DH_PARAMETERS["joint_4"]["a"],
+            "alpha": DH_PARAMETERS["joint_4"]["alpha"]
         },
         "joint_5":  {
-            "d": 173/1000.0,
+            "d": DH_PARAMETERS["joint_5"]["d"],
             "theta": theta_values[4],
-            "a": 0,
-            "alpha": 0
+            "a": DH_PARAMETERS["joint_5"]["a"],
+            "alpha": DH_PARAMETERS["joint_5"]["alpha"]
         }
     }
 
-    return DH_parameters
+    return computed_DH_params
 
 
 def get_FK_mat(joint_angles):
-    DH_parameters = compute_DH_params(joint_angles)
+    computed_DH_parameters = compute_DH_params(joint_angles)
 
     joint_T_mat_list = []
 
-    for key in DH_parameters:
-        joint_T_mat = calc_tfm_matrix(DH_parameters[key]["d"],
-                DH_parameters[key]["theta"],
-                DH_parameters[key]["a"],
-                DH_parameters[key]["alpha"])
+    for key in computed_DH_parameters:
+        joint_T_mat = calc_tfm_matrix(computed_DH_parameters[key]["d"],
+                computed_DH_parameters[key]["theta"],
+                computed_DH_parameters[key]["a"],
+                computed_DH_parameters[key]["alpha"])
         joint_T_mat_list.append(joint_T_mat)
 
     T_mat = joint_T_mat_list[0] @ joint_T_mat_list[1] @ joint_T_mat_list[2] @ joint_T_mat_list[3] @ joint_T_mat_list[4]
@@ -131,15 +160,17 @@ def calc_wrist_position(tf_mat):
     rot_mat = tf_mat[:3,:3]
     pos_vec = tf_mat[:3, 3].transpose()
 
-    wx = pos_vec[0] - ((173/1000) * rot_mat[:3, 2][0].transpose())
-    wy = pos_vec[1] - ((173/1000) * rot_mat[:3, 2][1].transpose())
-    wz = pos_vec[2] - ((173/1000) * rot_mat[:3, 2][2].transpose())
+    # print(pos_vec)
 
-    # print(f'wx: {wx}')
-    # print(f'wy: {wy}')
-    # print(f'wz: {wz}')
+    wx = pos_vec[0] - ((DH_PARAMETERS["joint_5"]["d"]) * rot_mat[:3, 2][0].transpose())
+    wy = pos_vec[1] - ((DH_PARAMETERS["joint_5"]["d"]) * rot_mat[:3, 2][1].transpose())
+    wz = pos_vec[2] - ((DH_PARAMETERS["joint_5"]["d"]) * rot_mat[:3, 2][2].transpose())
 
     wrist_pos_vec = np.array([wx, wy, wz])
+
+    print(wrist_pos_vec)
+
+    # print(rot_mat[:3, 2][2].transpose())
     
     return wrist_pos_vec
 
@@ -171,10 +202,10 @@ def calc_theta_3(wrist_pos_vector):
     wz = wrist_pos_vector[2]
 
     a = sqrt((wx**2) + (wy**2))
-    b = wz - 0.121  # wz - d1
+    b = wz - DH_PARAMETERS["joint_1"]["d"]  # wz - d1
 
-    numerator = ((a**2) + (b**2) - (0.17255**2) - (0.17255**2))
-    denominator = 2 * (0.17255) * 0.17255
+    numerator = (a**2) + (b**2) - (DH_PARAMETERS["joint_2"]["a"]**2) - (DH_PARAMETERS["joint_3"]["a"]**2)
+    denominator = 2 * DH_PARAMETERS["joint_2"]["a"] * DH_PARAMETERS["joint_3"]["a"]
 
     try:
         theta_3 = acos(numerator/denominator)
@@ -191,9 +222,9 @@ def calc_theta_2(wrist_pos_vector, theta_3):
     wz = wrist_pos_vector[2]
 
     a = sqrt((wx**2) + (wy**2))
-    b = wz - 0.121
+    b = wz - DH_PARAMETERS["joint_1"]["d"]
 
-    numerator = ((0.17255 + 0.17255 * cos(theta_3)) * b) + (a * 0.17255 * sin(theta_3))
+    numerator = (((DH_PARAMETERS["joint_2"]["a"]) + DH_PARAMETERS["joint_3"]["a"] * cos(theta_3)) * b) + (a * DH_PARAMETERS["joint_3"]["a"] * sin(theta_3))
     denominator = (a**2) + (b**2)
 
     theta_2 = acos(numerator/denominator)

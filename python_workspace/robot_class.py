@@ -31,12 +31,12 @@ class Robot_Arm:
         # --- INITIALIZE POSITION ---
         self.current_pose = np.array([[1, 0, 0, 0],
                                      [0, 1, 0, 0],
-                                     [0, 0, 1, 0.551],
+                                     [0, 0, 1, 0.6391],
                                      [0, 0, 0, 1]])
         self.current_pos = np.array([self.current_pose[0][3], self.current_pose[1][3], self.current_pose[2][3]])
-        self.home_pose = np.array([[1, 0, 0, 0.18],
+        self.home_pose = np.array([[1, 0, 0, 0.15],
                                   [0, 1, 0, 0],
-                                  [0, 0, -1, 0.06],
+                                  [0, 0, -1, 0.1],
                                   [0, 0, 0, 1]])
         self.home_rot_pitch = pi
         self.gripper_state = b'1'

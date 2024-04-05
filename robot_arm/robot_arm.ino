@@ -240,6 +240,11 @@ void serial_to_joint_angles() {
       }
       // End parsing
 
+      Serial.println(joint_angles[0]);
+      Serial.println(joint_angles[1]);
+      Serial.println(joint_angles[2]);
+      Serial.println(joint_angles[3]);
+
       // Move joints
       for (int i=0; i<(num_servos-1); i++)  {
         if(i==1)  {
