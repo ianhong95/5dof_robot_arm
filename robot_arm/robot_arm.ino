@@ -220,7 +220,7 @@ void serial_to_joint_angles() {
     
     incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 50);
     Serial.read();  // Clear input buffer
-    Serial.println("Data received!");
+    // Serial.println("Data received!");
 
     if (incoming_buffer[0] == START_MARKER) {
       set_gripper(incoming_buffer[2]);
@@ -246,7 +246,7 @@ void serial_to_joint_angles() {
       Serial.println(joint_angles[3]);
 
       // Move joints
-      for (int i=0; i<(num_servos-1); i++)  {
+      for (int i=0; i<(num_servos-2); i++)  {
         if(i==1)  {
           adjusted_joint_angles[i] = zero_angles[i] - joint_angles[i]; // This servo is mounted in reverse
         } else {

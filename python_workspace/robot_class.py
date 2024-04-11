@@ -34,14 +34,15 @@ class Robot_Arm:
                                      [0, 0, 1, 0.6391],
                                      [0, 0, 0, 1]])
         self.current_pos = np.array([self.current_pose[0][3], self.current_pose[1][3], self.current_pose[2][3]])
-        self.home_pose = np.array([[1, 0, 0, 0.15],
+        self.home_pose = np.array([[1, 0, 0, 0.1],
                                   [0, 1, 0, 0],
-                                  [0, 0, -1, 0.1],
+                                  [0, 0, -1, 0.15],
                                   [0, 0, 0, 1]])
         self.home_rot_pitch = pi
         self.gripper_state = b'1'
 
         print("Class initialized!")
+        # print(f'Initial pose: {self.current_pose}')
 
     # --- ROBOT MATH ---
 
@@ -196,13 +197,21 @@ class Robot_Arm:
 
     def move_x(self, x_increment, delay=0):
         translation_vector = np.array([x_increment, 0, 0])
+
         new_frame_mat = k.tf_from_position(translation_vector, self.current_pose)
+
+        # self.current_pose[0][3]+=x_increment
         target_joint_angles = self.compute_ik(new_frame_mat)
+        # target_joint_angles = self.compute_ik(self.current_pose)
+        # print((((f'current pose: {self.current_pose}'))))
+
 
         self.update_current_pose(new_frame_mat)
 
         self.serial_write(target_joint_angles)
         time.sleep(delay)
+
+        return target_joint_angles
 
 
     def move_y(self, y_increment, delay=0):
@@ -215,6 +224,7 @@ class Robot_Arm:
         self.serial_write(target_joint_angles)
         time.sleep(delay)
 
+        return target_joint_angles
     
     def move_z(self, z_increment, delay=0):
         translation_vector = np.array([0, 0, z_increment])
@@ -225,6 +235,8 @@ class Robot_Arm:
 
         self.serial_write(target_joint_angles)
         time.sleep(delay)
+
+        return target_joint_angles
     
 
     # --- Sync all motors to arrive at target at the same time
@@ -242,6 +254,7 @@ class Robot_Arm:
 
     def update_current_pose(self, pose):
         self.current_pose = pose
+        # print(f'current_pose: {self.current_pose}')
 
         self.current_pos[0] = pose[0][3]
         self.current_pos[1] = pose[1][3]

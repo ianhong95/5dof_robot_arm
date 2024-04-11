@@ -1,4 +1,4 @@
-from math import sin, cos, atan, atan2, pi, sqrt, acos, asin
+from math import sin, cos, atan, atan2, pi, sqrt, acos, asin, degrees, radians
 import numpy as np
 
 
@@ -162,15 +162,11 @@ def calc_wrist_position(tf_mat):
 
     # print(pos_vec)
 
-    wx = pos_vec[0] - ((DH_PARAMETERS["joint_5"]["d"]) * rot_mat[:3, 2][0].transpose())
-    wy = pos_vec[1] - ((DH_PARAMETERS["joint_5"]["d"]) * rot_mat[:3, 2][1].transpose())
-    wz = pos_vec[2] - ((DH_PARAMETERS["joint_5"]["d"]) * rot_mat[:3, 2][2].transpose())
+    wx = pos_vec[0] - (0.173 * rot_mat[:3, 2][0].transpose())
+    wy = pos_vec[1] - (0.173 * rot_mat[:3, 2][1].transpose())
+    wz = pos_vec[2] - (0.173 * rot_mat[:3, 2][2].transpose())
 
     wrist_pos_vec = np.array([wx, wy, wz])
-
-    print(wrist_pos_vec)
-
-    # print(rot_mat[:3, 2][2].transpose())
     
     return wrist_pos_vec
 
@@ -202,10 +198,10 @@ def calc_theta_3(wrist_pos_vector):
     wz = wrist_pos_vector[2]
 
     a = sqrt((wx**2) + (wy**2))
-    b = wz - DH_PARAMETERS["joint_1"]["d"]  # wz - d1
+    b = wz - 0.121  # wz - d1
 
-    numerator = (a**2) + (b**2) - (DH_PARAMETERS["joint_2"]["a"]**2) - (DH_PARAMETERS["joint_3"]["a"]**2)
-    denominator = 2 * DH_PARAMETERS["joint_2"]["a"] * DH_PARAMETERS["joint_3"]["a"]
+    numerator = (a**2) + (b**2) - (0.17255**2) - (0.17255**2)
+    denominator = 2 * 0.17255 * 0.17255
 
     try:
         theta_3 = acos(numerator/denominator)
@@ -222,9 +218,10 @@ def calc_theta_2(wrist_pos_vector, theta_3):
     wz = wrist_pos_vector[2]
 
     a = sqrt((wx**2) + (wy**2))
-    b = wz - DH_PARAMETERS["joint_1"]["d"]
+    b = wz - 0.121  # wz - d1
 
-    numerator = (((DH_PARAMETERS["joint_2"]["a"]) + DH_PARAMETERS["joint_3"]["a"] * cos(theta_3)) * b) + (a * DH_PARAMETERS["joint_3"]["a"] * sin(theta_3))
+
+    numerator = ((0.17255 + 0.17255 * cos(theta_3)) * a) + (b * 0.17255 * sin(theta_3))
     denominator = (a**2) + (b**2)
 
     theta_2 = acos(numerator/denominator)
@@ -235,8 +232,8 @@ def calc_theta_2(wrist_pos_vector, theta_3):
 def calc_joint_angles(tf_matrix):
     wrist_pos = calc_wrist_position(tf_matrix)
     theta_1 = round(calc_theta_1(wrist_pos), 2)
-    theta_3 = round(calc_theta_3(wrist_pos), 2)
-    theta_2 = round(calc_theta_2(wrist_pos, theta_3), 2)
+    theta_3 = -round(calc_theta_3(wrist_pos), 2)    # Flip sign because I'm dumb and messed up frame assignment
+    theta_2 = round(calc_theta_2(wrist_pos, theta_3), 2) - pi/2     # Subtract pi/2 because of frame assignment
 
     position_angles = [theta_1, theta_2, theta_3]
 
@@ -252,7 +249,7 @@ def calc_orientation_angles(tf_matrix):
 
     rot_mat_product = rot_mat_14_inv @ (rot_mat_16)
 
-    theta_4 = round(acos(rot_mat_product[0, 2]), 2)
+    theta_4 = -round(acos(rot_mat_product[0, 2]), 2)    # Flip sign because I'm dumb and messed up frame assignment
     theta_5 = round(acos(rot_mat_product[2, 1]), 2)
 
     orientation_angles = [theta_4, theta_5]
@@ -262,15 +259,15 @@ def calc_orientation_angles(tf_matrix):
 
 # --- TRANSLATIONS AND ROTATIONS ---
 
-def tf_from_position(position_mtx, current_frame):
-    translation_mtx = np.array([[1, 0, 0, position_mtx[0]],
-                                [0, 1, 0, position_mtx[1]],
-                                [0, 0, 1, position_mtx[2]],
+def tf_from_position(position_vec, current_frame):
+    translation_mtx = np.array([[1, 0, 0, position_vec[0]],
+                                [0, 1, 0, position_vec[1]],
+                                [0, 0, 1, position_vec[2]],
                                 [0, 0, 0, 1]])
 
-    new_frame = translation_mtx @ current_frame
+    new_tf_mat = translation_mtx @ current_frame
 
-    return new_frame
+    return new_tf_mat
 
 
 # roll = rotation about x
