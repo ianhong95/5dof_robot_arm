@@ -46,8 +46,8 @@ const float GRIPPER_MAX_PWM = 385;  // TBD
 
 // --- PHYSICAL JOINT PARAMETERS ---
 const float joint_max_angles[5] = {270.0, 270.0, 270.0, 270.0, 180.0};
-const float joint_min_pwm[5] = {141.0, 153.0, 146.0, 135.0, 130.0}; // CALIBRATED 03/24/2024 using jig
-const float joint_max_pwm[5] = {640.0, 625.0, 620.0, 616.0, 650.0}; // CALIBRATED 03/24/2024 using jig
+const float joint_min_pwm[5] = {141.0, 153.0, 146.0, 160.0, 130.0}; // CALIBRATED 03/24/2024 using jig (J4 135)
+const float joint_max_pwm[5] = {640.0, 625.0, 620.0, 590.0, 650.0}; // CALIBRATED 03/24/2024 using jig (J4 616)
 
 // --- ALLOWABLE JOINT PARAMETERS ---
 const float joint_min_allowable_angles[5] = {45, 45, 45, 45, 10}; // TBD
@@ -240,17 +240,17 @@ void serial_to_joint_angles() {
       }
       // End parsing
 
-      Serial.println(joint_angles[0]);
-      Serial.println(joint_angles[1]);
-      Serial.println(joint_angles[2]);
-      Serial.println(joint_angles[3]);
+      // Serial.println(joint_angles[0]);
+      // Serial.println(joint_angles[1]);
+      // Serial.println(joint_angles[2]);
+      // Serial.println(joint_angles[3]);
 
       // Move joints
       for (int i=0; i<(num_servos-2); i++)  {
         if(i==1)  {
-          adjusted_joint_angles[i] = zero_angles[i] - joint_angles[i]; // This servo is mounted in reverse
+          adjusted_joint_angles[i] = zero_angles[i] + joint_angles[i]; // This servo is mounted in reverse
         } else {
-          adjusted_joint_angles[i] = zero_angles[i] + joint_angles[i];
+          adjusted_joint_angles[i] = zero_angles[i] - joint_angles[i];
         }
       }
       

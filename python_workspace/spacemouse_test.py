@@ -8,8 +8,8 @@ import kinematics as k
 import robot_class as robot
 
 
-DEADZONE = 0.02
-STEP = 0.05
+DEADZONE = 0.1
+STEP = 0.02
 
 
 def main():
@@ -29,15 +29,15 @@ def main():
     initial_b2_state = 0
     initial_time = 0
 
+
     while 1:
         state = pyspacemouse.read()
         new_time = state.t
         time_diff = new_time - initial_time
+        print(time_diff)
+
 
         if time_diff > 0.1:
-            state = pyspacemouse.read()
-            print(state)
-
             if state.buttons[0]==1 and initial_b1_state==0 and gripper_state==1:
                 test_robot.set_gripper(0)
                 initial_b1_state = 0

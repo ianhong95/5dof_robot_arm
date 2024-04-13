@@ -34,9 +34,9 @@ class Robot_Arm:
                                      [0, 0, 1, 0.6391],
                                      [0, 0, 0, 1]])
         self.current_pos = np.array([self.current_pose[0][3], self.current_pose[1][3], self.current_pose[2][3]])
-        self.home_pose = np.array([[1, 0, 0, 0.1],
+        self.home_pose = np.array([[1, 0, 0, 0.15],
                                   [0, 1, 0, 0],
-                                  [0, 0, -1, 0.15],
+                                  [0, 0, -1, 0.1],
                                   [0, 0, 0, 1]])
         self.home_rot_pitch = pi
         self.gripper_state = b'1'
@@ -103,7 +103,6 @@ class Robot_Arm:
             encoded_angle_list = self.encode_data(raw_angle_list)
 
             string_to_send = encoded_angle_list[0] + self.DELIMITER + encoded_angle_list[1] + self.DELIMITER + encoded_angle_list[2] + self.DELIMITER + encoded_angle_list[3] + self.DELIMITER + encoded_angle_list[4] + self.END_CHAR
-            print(string_to_send)
             self.serial_port.write(string_to_send)
         else:
             string_to_send = self.START_CHAR + self. DELIMITER + str(gripper).encode() + self.END_CHAR

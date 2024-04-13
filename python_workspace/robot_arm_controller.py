@@ -14,9 +14,13 @@ def main():
 
     test_robot.home(2)
 
-    test_robot.move_x(0.05, move_delay)
+    test_robot.move_x(0.1, move_delay)
 
-    test_robot.move_x(-0.05, move_delay)
+    test_robot.move_x(-0.1, move_delay)
+
+    test_robot.move_y(-0.1, move_delay)
+
+    test_robot.move_y(0.1, move_delay)
 
     # test_robot.set_gripper(0)
 
