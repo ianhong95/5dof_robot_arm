@@ -39,6 +39,7 @@ class Robot_Arm:
                                   [0, 0, -1, 0.1],
                                   [0, 0, 0, 1]])
         self.home_rot_pitch = pi
+        self.EE_OFFSET = 0.173
         self.gripper_state = b'1'
 
         print("Class initialized!")
@@ -237,8 +238,24 @@ class Robot_Arm:
 
         return target_joint_angles
     
+# Positive pitches up
+    def pitch(self, pitch_increment, delay=0):
+        pitch_radians = radians(pitch_increment)
 
-    # --- Sync all motors to arrive at target at the same time
+        wrist_pose = k.calc_wrist_pose(self.current_pose)
+        new_wrist_frame = k.tf_from_pitch(pitch_radians, wrist_pose)
+        new_frame_mat = k.calc_ee_pose(new_wrist_frame)
+        target_joint_angles = self.compute_ik(new_frame_mat)
+
+        self.update_current_pose(new_frame_mat)
+
+        self.serial_write(target_joint_angles)
+        time.sleep(delay)
+
+        return target_joint_angles
+    
+
+    # --- Sync all motors to arrive at target at the same time ()
 
     def calc_joint_steps(self, current_joint_angles, target_joint_angles):
         angle_step_list = []

@@ -16,6 +16,7 @@ ROBOT_ID = pybullet.loadURDF("Robot_Arm_Assm_URDF_V3/Robot_Arm_Assm_URDF_V3.urdf
 NUM_JOINTS = pybullet.getNumJoints(ROBOT_ID)
 end_effector_id = 5
 
+DELAY = 500
 
 def get_joint_angles():
     joint_angles = []
@@ -36,7 +37,7 @@ def home(robot):
     for i in range(len(target_joint_angles)):
         target_rads.append(radians(target_joint_angles[i]))
 
-    for i in range(2000):
+    for i in range(DELAY*4):
         pybullet.setJointMotorControlArray(bodyIndex=ROBOT_ID,
                                         jointIndices=[0, 1, 2, 3, 4],
                                         controlMode=pybullet.POSITION_CONTROL,
@@ -83,7 +84,52 @@ def move_x(robot, x):
     for i in range(len(target_joint_angles)):
         target_rads.append(radians(target_joint_angles[i]))
 
-    for i in range(2000):
+    for i in range(DELAY):
+        pybullet.setJointMotorControlArray(bodyIndex=ROBOT_ID,
+                                        jointIndices=[0, 1, 2, 3, 4],
+                                        controlMode=pybullet.POSITION_CONTROL,
+                                        targetPositions=[target_rads[0], target_rads[1], target_rads[2], target_rads[3], target_rads[4]])
+        pybullet.stepSimulation()
+        time.sleep(1./500.)
+
+def move_y(robot, y):
+    target_rads = []
+    target_joint_angles = robot.move_y(y)
+
+    for i in range(len(target_joint_angles)):
+        target_rads.append(radians(target_joint_angles[i]))
+
+    for i in range(DELAY):
+        pybullet.setJointMotorControlArray(bodyIndex=ROBOT_ID,
+                                        jointIndices=[0, 1, 2, 3, 4],
+                                        controlMode=pybullet.POSITION_CONTROL,
+                                        targetPositions=[target_rads[0], target_rads[1], target_rads[2], target_rads[3], target_rads[4]])
+        pybullet.stepSimulation()
+        time.sleep(1./500.)
+
+def move_z(robot, z):
+    target_rads = []
+    target_joint_angles = robot.move_z(z)
+
+    for i in range(len(target_joint_angles)):
+        target_rads.append(radians(target_joint_angles[i]))
+
+    for i in range(DELAY):
+        pybullet.setJointMotorControlArray(bodyIndex=ROBOT_ID,
+                                        jointIndices=[0, 1, 2, 3, 4],
+                                        controlMode=pybullet.POSITION_CONTROL,
+                                        targetPositions=[target_rads[0], target_rads[1], target_rads[2], target_rads[3], target_rads[4]])
+        pybullet.stepSimulation()
+        time.sleep(1./500.)
+
+def pitch(robot, angle):
+    target_rads = []
+    target_joint_angles = robot.pitch(angle)
+
+    for i in range(len(target_joint_angles)):
+        target_rads.append(radians(target_joint_angles[i]))
+
+    for i in range(DELAY):
         pybullet.setJointMotorControlArray(bodyIndex=ROBOT_ID,
                                         jointIndices=[0, 1, 2, 3, 4],
                                         controlMode=pybullet.POSITION_CONTROL,
@@ -98,6 +144,19 @@ def main():
 
     move_x(test_robot, 0.1)
     move_x(test_robot, -0.1)
+    move_y(test_robot, 0.1)
+    move_y(test_robot, -0.2)
+    move_y(test_robot, 0.1)
+    print("moving up")
+    move_z(test_robot, 0.02)
+    time.sleep(5)
+    move_z(test_robot, -0.05)
+    pitch(test_robot, 90)
+    move_x(test_robot, 0.1)
+    move_x(test_robot, -0.1)
+    pitch(test_robot, -90)
+    home(test_robot)
+
         # fk_x = fk[:3,3][0]
         # fk_y = fk[:3,3][1]
         # fk_z = fk[:3,3][2]

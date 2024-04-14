@@ -52,44 +52,19 @@ def main():
             test_robot.move_x(STEP)
         elif state.y < -DEADZONE:
             test_robot.move_x(-STEP)
+        elif state.x > DEADZONE:
+            test_robot.move_y(STEP)
+        elif state.x < -DEADZONE:
+            test_robot.move_y(-STEP)
         elif state.z > DEADZONE:
             test_robot.move_z(STEP)
         elif state.z < -DEADZONE:
             test_robot.move_z(-STEP)
+        elif time_diff > DEBOUNCE_TIME and state.buttons[-1]==1:
+            test_robot.home()
 
         initial_time = new_time
         time.sleep(0.02)
-        
-    #     new_time = state.t
-    #     time_diff = new_time - initial_time
-    #     print(time_diff)
-
-
-    #     if time_diff > 0.1:
-    #         if state.buttons[0]==1 and initial_b1_state==0 and gripper_state==1:
-    #             test_robot.set_gripper(0)
-    #             initial_b1_state = 0
-    #             gripper_state = 0
-    #         elif state.buttons[0]==1 and initial_b1_state==0 and gripper_state==0:
-    #             test_robot.set_gripper(1)
-    #             initial_b1_state = 0
-    #             gripper_state = 1
-    #         elif state.x > DEADZONE:
-    #             test_robot.move_y(STEP)
-    #         elif state.x < -DEADZONE:
-    #             test_robot.move_y(-STEP)
-    #         elif state.y > DEADZONE:
-    #             test_robot.move_x(STEP)
-    #         elif state.y < -DEADZONE:
-    #             test_robot.move_x(-STEP)
-    #         elif state.z > DEADZONE:
-    #             test_robot.move_z(STEP)
-    #         elif state.z < -DEADZONE:
-    #             test_robot.move_z(-STEP)
-
-    #         initial_time = new_time
-    #     else:
-    #         initial_time = new_time
     
 
 if __name__=="__main__":

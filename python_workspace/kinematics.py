@@ -3,6 +3,8 @@ import numpy as np
 
 
 # --- PHYSICAL ROBOT PARAMETERS ---
+EE_OFFSET = 0.173
+
 DH_PARAMETERS = {
         "joint_1": {
             "d": 121/1000.0,
@@ -183,6 +185,33 @@ def calc_wrist_orientation(tf_mat):
     return rot_vecs
 
 
+# This function is a faster way of doing the FK for the wrist for rotation movements
+def calc_wrist_pose(tf_mat):
+    rot_mat = tf_mat[:3,:3]
+    pos_vec = tf_mat[:3, 3].transpose()
+
+    tf_mat[0][3] = pos_vec[0] - (0.173 * rot_mat[:3, 2][0].transpose())
+    tf_mat[1][3] = pos_vec[1] - (0.173 * rot_mat[:3, 2][1].transpose())
+    tf_mat[2][3] = pos_vec[2] - (0.173 * rot_mat[:3, 2][2].transpose())
+
+    wrist_tf = tf_mat
+    
+    return wrist_tf
+
+
+def calc_ee_pose(tf_mat):
+    rot_mat = tf_mat[:3,:3]
+    pos_vec = tf_mat[:3, 3].transpose()
+
+    tf_mat[0, 3] = pos_vec[0] + (0.173 * rot_mat[:3, 2][0].transpose())
+    tf_mat[1, 3] = pos_vec[1] + (0.173 * rot_mat[:3, 2][1].transpose())
+    tf_mat[2, 3] = pos_vec[2] + (0.173 * rot_mat[:3, 2][2].transpose())
+
+    ee_tf = tf_mat
+    
+    return ee_tf
+
+
 def calc_theta_1(wrist_pos_vector):
     wy = wrist_pos_vector[1]
     wx = wrist_pos_vector[0]
@@ -249,7 +278,7 @@ def calc_orientation_angles(tf_matrix):
 
     rot_mat_product = rot_mat_14_inv @ (rot_mat_16)
 
-    theta_4 = -round(acos(rot_mat_product[0, 2]), 2)    # Flip sign because I'm dumb and messed up frame assignment
+    theta_4 = round(asin(rot_mat_product[1, 2]), 2)    # Use sin to avoid some solution ambiguity (cos is symmetric about 0)
     theta_5 = round(acos(rot_mat_product[2, 1]), 2)
 
     orientation_angles = [theta_4, theta_5]
@@ -291,7 +320,7 @@ def tf_from_pitch(pitch_angle, current_frame):
                              [-sin(pitch_angle), 0, cos(pitch_angle), 0],
                              [0, 0, 0, 1]])
     
-    new_frame = rotation_mtx @ current_frame
+    new_frame = current_frame @ rotation_mtx
 
     return new_frame
 
@@ -302,6 +331,6 @@ def tf_from_yaw(yaw_angle, current_frame):
                              [0, 0, 1, 0],
                              [0, 0, 0, 1]])
     
-    new_frame = rotation_mtx @ current_frame
+    new_frame = current_frame @ rotation_mtx
 
     return new_frame
