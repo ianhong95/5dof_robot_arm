@@ -16,7 +16,7 @@ class Robot_Arm:
         self.num_steps = 10.0
 
         # SERIAL
-        self.serial_port = serial.Serial("/dev/ttyUSB0", 115200)    # Find a way to scan and find the right serial port
+        self.serial_port = serial.Serial("/dev/ttyACM0", 115200)    # Find a way to scan and find the right serial port
         self.START_CHAR = b'<'
         self.END_CHAR = b'>'
         self.DELIMITER = b','
@@ -96,7 +96,7 @@ class Robot_Arm:
 
         return encoded_list
     
-
+    # Using angles
     def serial_write(self, raw_angle_list=[], gripper=1):
         print(raw_angle_list)
         if len(raw_angle_list) > 0:

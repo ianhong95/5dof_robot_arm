@@ -99,6 +99,8 @@ void setup() {
   force_vertical();
   // set_zero_pwm();
   // servo_calibration();
+  Serial.println("Ready!");
+
   delay(500);
   timer = millis();
 }
@@ -178,6 +180,7 @@ void step_joint_angles(float joint_angle_targets[5]) {
   for (int i=0; i<num_servos-1; i++)  {
     joint_target_reached[i] = false;
     joint_pwm_targets[i] = map(joint_angle_targets[i], 0, joint_max_angles[i], joint_min_pwm[i], joint_max_pwm[i]);
+    // Serial.println(joint_pwm_targets[i]);
   }
 
   while (joint_target_reached[0]==false || joint_target_reached[1]==false || joint_target_reached[2]==false || joint_target_reached[3]==false)  {
@@ -221,6 +224,7 @@ void serial_to_joint_angles() {
     incoming_byte = Serial.readBytesUntil(END_MARKER, incoming_buffer, 50);
     Serial.read();  // Clear input buffer
     // Serial.println("Data received!");
+    Serial.println(incoming_buffer);
 
     if (incoming_buffer[0] == START_MARKER) {
       set_gripper(incoming_buffer[2]);
@@ -239,13 +243,14 @@ void serial_to_joint_angles() {
         tok_counter++;
       }
       // End parsing
-
+      
       // Serial.println(joint_angles[0]);
       // Serial.println(joint_angles[1]);
       // Serial.println(joint_angles[2]);
       // Serial.println(joint_angles[3]);
+      // Serial.println(joint_angles[4]);
 
-      // Move joints
+      // Move joints to absolute positions relative to zero positions
       for (int i=0; i<(num_servos-2); i++)  {
         if(i==1)  {
           adjusted_joint_angles[i] = zero_angles[i] + joint_angles[i]; // This servo is mounted in reverse
